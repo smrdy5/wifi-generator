@@ -68,6 +68,10 @@ document.addEventListener('DOMContentLoaded', () => {
       return `WIFI:S:${escapedSsid};T:nopass;${hiddenPart};`;
     }
 
+    if (formatMode === 'raw_no_escape') {
+      return `WIFI:S:${rawSsid};T:WPA;P:${rawPassword};${hiddenPart};`;
+    }
+
     let secTag = 'WPA';
     if (formatMode === 'wpa2') {
       secTag = 'WPA2-PSK';
