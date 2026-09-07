@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const ssidInput = document.getElementById('ssid');
   const passwordInput = document.getElementById('password');
   const passwordGroup = document.getElementById('password-group');
+  const passwordHint = document.getElementById('password-hint');
   const togglePasswordBtn = document.getElementById('toggle-password');
   const eyeIcon = document.getElementById('eye-icon');
   const securitySelect = document.getElementById('security');
@@ -42,7 +43,11 @@ document.addEventListener('DOMContentLoaded', () => {
     return str.replace(/([\\;,":])/g, '\\$1');
   }
 
-  // Generate standard WiFi QR Code payload string
+  /**
+   * Generate standard ZXing WiFi QR Code payload string:
+   * Format: WIFI:S:<SSID>;T:<TYPE>;P:<PASSWORD>;H:<true|false|blank>;;
+   * Order S: MUST come first for iOS & Android camera compatibility.
+   */
   function generateWifiString() {
     const ssid = ssidInput.value.trim();
     const password = passwordInput.value;
@@ -53,13 +58,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const escapedSsid = escapeWifiString(ssid);
     const escapedPassword = escapeWifiString(password);
-    const hiddenFlag = isHidden ? 'true' : 'false';
 
-    if (security === 'nopass') {
-      return `WIFI:T:nopass;S:${escapedSsid};H:${hiddenFlag};;`;
+    // Build payload: S: comes first for max scanner compatibility
+    let payload = `WIFI:S:${escapedSsid};`;
+
+    if (security !== 'nopass') {
+      payload += `T:${security};`;
+      if (escapedPassword) {
+        payload += `P:${escapedPassword};`;
+      }
+    } else {
+      payload += `T:nopass;`;
     }
 
-    return `WIFI:T:${security};S:${escapedSsid};P:${escapedPassword};H:${hiddenFlag};;`;
+    if (isHidden) {
+      payload += `H:true;`;
+    }
+
+    payload += `;`;
+    return payload;
   }
 
   // Draw QR code onto a canvas element using local qrcode generator
@@ -142,6 +159,20 @@ document.addEventListener('DOMContentLoaded', () => {
 </svg>`;
   }
 
+  // Validate WPA password length hint
+  function updatePasswordHint() {
+    if (!passwordHint) return;
+    const sec = securitySelect.value;
+    const pass = passwordInput.value;
+
+    if (sec === 'WPA' && pass && pass.length < 8) {
+      passwordHint.textContent = '⚠️ WPA passwords are typically at least 8 characters long.';
+      passwordHint.classList.remove('hidden');
+    } else {
+      passwordHint.classList.add('hidden');
+    }
+  }
+
   // Master update function
   function updateQRCode() {
     const wifiString = generateWifiString();
@@ -155,6 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
       qrSizeValue.textContent = `${size}px`;
     }
 
+    updatePasswordHint();
     renderQrToCanvas(qrCanvas, wifiString, size, fgColor, bgColor);
   }
 
