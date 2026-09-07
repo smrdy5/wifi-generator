@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Master update function
   function updateQRCode() {
     const wifiString = generateWifiString();
-    rawStringEl.textContent = wifiString || 'WIFI:S:UYFC-6th floor;T:WPA;P:Password123;;';
+    rawStringEl.textContent = wifiString || 'WIFI:S:UYFC-6th floor;T:WPA;P:Office68888;;';
 
     const fgColor = fgColorInput ? fgColorInput.value : '#000000';
     const bgColor = bgColorInput ? bgColorInput.value : '#ffffff';
