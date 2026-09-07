@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const passwordInput = document.getElementById('password');
   const passwordGroup = document.getElementById('password-group');
   const passwordHint = document.getElementById('password-hint');
+  const spaceWarning = document.getElementById('space-warning');
   const togglePasswordBtn = document.getElementById('toggle-password');
   const eyeIcon = document.getElementById('eye-icon');
   const securitySelect = document.getElementById('security');
@@ -49,21 +50,22 @@ document.addEventListener('DOMContentLoaded', () => {
    * Order S: MUST come first for iOS & Android camera compatibility.
    */
   function generateWifiString() {
-    const ssid = ssidInput.value.trim();
-    const password = passwordInput.value;
+    const rawSsid = ssidInput.value;
+    const rawPassword = passwordInput.value;
     const security = securitySelect.value;
     const isHidden = hiddenCheckbox.checked;
 
-    if (!ssid) return '';
+    if (!rawSsid) return '';
 
-    const escapedSsid = escapeWifiString(ssid);
-    const escapedPassword = escapeWifiString(password);
+    const escapedSsid = escapeWifiString(rawSsid);
+    const escapedPassword = escapeWifiString(rawPassword);
 
     // Build payload: S: comes first for max scanner compatibility
     let payload = `WIFI:S:${escapedSsid};`;
 
     if (security !== 'nopass') {
-      payload += `T:${security};`;
+      // Standard ZXing protocol maps WPA/WPA2/WPA3 to T:WPA
+      payload += `T:WPA;`;
       if (escapedPassword) {
         payload += `P:${escapedPassword};`;
       }
@@ -159,14 +161,31 @@ document.addEventListener('DOMContentLoaded', () => {
 </svg>`;
   }
 
+  // Check for leading or trailing whitespace warnings
+  function checkSpaceWarnings() {
+    if (!spaceWarning) return;
+    const ssid = ssidInput.value;
+    const pass = passwordInput.value;
+
+    const hasSsidEdgeSpace = ssid !== ssid.trim();
+    const hasPassEdgeSpace = pass !== pass.trim();
+
+    if (hasSsidEdgeSpace || hasPassEdgeSpace) {
+      spaceWarning.textContent = '⚠️ Warning: Leading or trailing spaces detected in Network Name or Password!';
+      spaceWarning.classList.remove('hidden');
+    } else {
+      spaceWarning.classList.add('hidden');
+    }
+  }
+
   // Validate WPA password length hint
   function updatePasswordHint() {
     if (!passwordHint) return;
     const sec = securitySelect.value;
     const pass = passwordInput.value;
 
-    if (sec === 'WPA' && pass && pass.length < 8) {
-      passwordHint.textContent = '⚠️ WPA passwords are typically at least 8 characters long.';
+    if (sec !== 'nopass' && pass && pass.length < 8) {
+      passwordHint.textContent = '⚠️ WPA / WPA2 passwords are required to be at least 8 characters long.';
       passwordHint.classList.remove('hidden');
     } else {
       passwordHint.classList.add('hidden');
@@ -176,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Master update function
   function updateQRCode() {
     const wifiString = generateWifiString();
-    rawStringEl.textContent = wifiString || 'WIFI:S:MyNetwork;T:WPA;P:Password123;;';
+    rawStringEl.textContent = wifiString || 'WIFI:S:UYFC-6th floor;T:WPA;P:Password123;;';
 
     const fgColor = fgColorInput ? fgColorInput.value : '#000000';
     const bgColor = bgColorInput ? bgColorInput.value : '#ffffff';
@@ -186,6 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
       qrSizeValue.textContent = `${size}px`;
     }
 
+    checkSpaceWarnings();
     updatePasswordHint();
     renderQrToCanvas(qrCanvas, wifiString, size, fgColor, bgColor);
   }
