@@ -90,7 +90,7 @@
               id="security"
               class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
             >
-              <option value="WPA" selected>WPA / WPA2-Personal / WPA3 (Recommended)</option>
+              <option value="WPA" selected>WPA / WPA2-Personal / WPA3 (Standard for almost all routers)</option>
               <option value="WEP">WEP (Legacy)</option>
               <option value="nopass">None (Open Network)</option>
             </select>
@@ -120,6 +120,22 @@
             </div>
             <p id="password-hint" class="text-xs text-amber-400 mt-1 hidden"></p>
             <p id="space-warning" class="text-xs text-amber-400 mt-1 hidden"></p>
+          </div>
+
+          <!-- QR Protocol Format Variant Selector -->
+          <div>
+            <label for="qr-format" class="block text-sm font-medium text-slate-300 mb-1">
+              QR Protocol Mode <span class="text-xs text-slate-400 font-normal">(Try if scanner fails)</span>
+            </label>
+            <select
+              id="qr-format"
+              class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition text-xs font-mono"
+            >
+              <option value="standard" selected>Standard ZXing: WIFI:S:SSID;T:WPA;P:password;; (Recommended)</option>
+              <option value="quoted">Quoted Format: WIFI:S:"SSID";T:WPA;P:"password";; (For SSIDs with spaces)</option>
+              <option value="wpa2">Explicit WPA2-PSK: WIFI:S:SSID;T:WPA2-PSK;P:password;;</option>
+              <option value="legacy_order">Legacy Key Order: WIFI:T:WPA;S:SSID;P:password;;</option>
+            </select>
           </div>
 
           <!-- Hidden Network Toggle -->
@@ -252,14 +268,9 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            "Unable to join network" Verification Checklist:
+            Scanner Compatibility Modes:
           </p>
-          <ul class="list-disc list-inside text-slate-400 space-y-1 pl-1 text-[11px]">
-            <li>Network SSID: <span class="text-slate-200 font-mono">UYFC-6th floor</span> (exact match with space).</li>
-            <li>Security: <span class="text-slate-200 font-medium">WPA / WPA2-Personal</span> (do NOT select WEP).</li>
-            <li>Password: Must be <strong class="text-amber-300">100% exact WiFi password</strong> (case-sensitive).</li>
-            <li>Hidden Network: Keep <strong class="text-slate-200">Unchecked</strong>.</li>
-          </ul>
+          <p class="text-slate-400 text-[11px]">If your camera app fails to join, try selecting **Quoted Format** or **Explicit WPA2-PSK** in the <em class="text-slate-200">QR Protocol Mode</em> dropdown above.</p>
         </div>
       </div>
     </div>

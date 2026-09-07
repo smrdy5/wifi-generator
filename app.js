@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const togglePasswordBtn = document.getElementById('toggle-password');
   const eyeIcon = document.getElementById('eye-icon');
   const securitySelect = document.getElementById('security');
+  const formatSelect = document.getElementById('qr-format');
   const hiddenCheckbox = document.getElementById('hidden-network');
 
   // Customization Elements
@@ -45,40 +46,45 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /**
-   * Generate standard ZXing WiFi QR Code payload string:
-   * Format: WIFI:S:<SSID>;T:<TYPE>;P:<PASSWORD>;H:<true|false|blank>;;
-   * Order S: MUST come first for iOS & Android camera compatibility.
+   * Generate WiFi QR Code payload string supporting multiple protocol variants
    */
   function generateWifiString() {
     const rawSsid = ssidInput.value;
     const rawPassword = passwordInput.value;
     const security = securitySelect.value;
+    const formatMode = formatSelect ? formatSelect.value : 'standard';
     const isHidden = hiddenCheckbox.checked;
 
     if (!rawSsid) return '';
 
     const escapedSsid = escapeWifiString(rawSsid);
     const escapedPassword = escapeWifiString(rawPassword);
+    const hiddenPart = isHidden ? 'H:true;' : '';
 
-    // Build payload: S: comes first for max scanner compatibility
-    let payload = `WIFI:S:${escapedSsid};`;
-
-    if (security !== 'nopass') {
-      // Standard ZXing protocol maps WPA/WPA2/WPA3 to T:WPA
-      payload += `T:WPA;`;
-      if (escapedPassword) {
-        payload += `P:${escapedPassword};`;
+    if (security === 'nopass') {
+      if (formatMode === 'quoted') {
+        return `WIFI:S:"${escapedSsid}";T:nopass;${hiddenPart};`;
       }
-    } else {
-      payload += `T:nopass;`;
+      return `WIFI:S:${escapedSsid};T:nopass;${hiddenPart};`;
     }
 
-    if (isHidden) {
-      payload += `H:true;`;
+    let secTag = 'WPA';
+    if (formatMode === 'wpa2') {
+      secTag = 'WPA2-PSK';
+    } else if (security === 'WEP') {
+      secTag = 'WEP';
     }
 
-    payload += `;`;
-    return payload;
+    if (formatMode === 'quoted') {
+      return `WIFI:S:"${escapedSsid}";T:${secTag};P:"${escapedPassword}";${hiddenPart};`;
+    }
+
+    if (formatMode === 'legacy_order') {
+      return `WIFI:T:${secTag};S:${escapedSsid};P:${escapedPassword};${hiddenPart};`;
+    }
+
+    // Standard ZXing protocol (Default)
+    return `WIFI:S:${escapedSsid};T:${secTag};P:${escapedPassword};${hiddenPart};`;
   }
 
   // Draw QR code onto a canvas element using local qrcode generator
@@ -239,20 +245,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Handle Security Type Change
-  if (securitySelect) {
-    securitySelect.addEventListener('change', () => {
-      if (securitySelect.value === 'nopass') {
-        passwordInput.disabled = true;
-        passwordInput.value = '';
-        passwordGroup.classList.add('opacity-50', 'pointer-events-none');
-      } else {
-        passwordInput.disabled = false;
-        passwordGroup.classList.remove('opacity-50', 'pointer-events-none');
-      }
-      updateQRCode();
-    });
-  }
+  // Handle Security Type & Format Change
+  [securitySelect, formatSelect].forEach((select) => {
+    if (select) {
+      select.addEventListener('change', () => {
+        if (securitySelect.value === 'nopass') {
+          passwordInput.disabled = true;
+          passwordInput.value = '';
+          passwordGroup.classList.add('opacity-50', 'pointer-events-none');
+        } else {
+          passwordInput.disabled = false;
+          passwordGroup.classList.remove('opacity-50', 'pointer-events-none');
+        }
+        updateQRCode();
+      });
+    }
+  });
 
   // Live Input Event Listeners
   [ssidInput, passwordInput, hiddenCheckbox, fgColorInput, bgColorInput, qrSizeInput].forEach((el) => {
